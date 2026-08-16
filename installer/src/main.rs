@@ -15,6 +15,7 @@ use window::{Ui, BUSY, CHOICE, ID_PRIMARY, ID_SECONDARY};
 
 #[derive(Clone, Copy, PartialEq)]
 enum Screen {
+    NeedSpotify,
     NeedSpicetify,
     Update,
     Install,
@@ -25,7 +26,9 @@ enum Screen {
 fn main() -> windows::core::Result<()> {
     let installed = is_installed();
 
-    let mut screen = if !spicetify_ready() {
+    let mut screen = if !spotify_installed() {
+        Screen::NeedSpotify
+    } else if !spicetify_ready() {
         Screen::NeedSpicetify
     } else if installed {
         Screen::Remove
@@ -58,6 +61,12 @@ fn spicetify_ready() -> bool {
 
 fn ui_for(screen: Screen, remote: &Option<Release>, installed: bool) -> Ui {
     match screen {
+        Screen::NeedSpotify => Ui {
+            title: "Spotify needed".into(),
+            body: "Duckify works inside the Spotify desktop app, which is not on this computer.\n\nInstall Spotify, then Spicetify, then open this installer again.".into(),
+            primary: "Get Spotify".into(),
+            secondary: Some("Close".into()),
+        },
         Screen::NeedSpicetify => Ui {
             title: "Spicetify needed".into(),
             body: "Duckify adds a button inside Spotify, which needs Spicetify installed first.\n\nGet Spicetify, run it once, then open this installer again.".into(),
@@ -106,6 +115,13 @@ fn run_loop(hwnd: HWND, mut screen: Screen, remote: Option<Release>, installed: 
             if msg.message == WM_APP {
                 let choice = CHOICE.swap(0, Ordering::Relaxed) as usize;
                 match (screen, choice) {
+                    (Screen::NeedSpotify, ID_PRIMARY) => {
+                        open_url("https://www.spotify.com/download/windows/");
+                    }
+                    (Screen::NeedSpotify, ID_SECONDARY) => {
+                        PostQuitMessage(0);
+                    }
+
                     (Screen::NeedSpicetify, ID_PRIMARY) => {
                         open_url("https://spicetify.app/");
                     }

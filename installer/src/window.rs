@@ -1,14 +1,14 @@
 use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
 use std::sync::Mutex;
 
-use windows::core::{w, PCWSTR};
-use windows::Win32::Foundation::{COLORREF, HWND, LPARAM, LRESULT, RECT, SIZE, WPARAM};
+use windows::core::w;
+use windows::Win32::Foundation::{COLORREF, HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Gdi::{
-    BeginPaint, CreateFontW, CreateSolidBrush, DeleteObject, DrawTextW, EndPaint, FillRect,
-    InvalidateRect, RoundRect, SelectObject, SetBkMode, SetTextColor, CreatePen, GetDC, ReleaseDC,
-    DT_CENTER, DT_LEFT, DT_SINGLELINE, DT_VCENTER, DT_WORDBREAK, FW_BOLD, FW_NORMAL, HBRUSH,
-    PAINTSTRUCT, PS_SOLID, TRANSPARENT, ANTIALIASED_QUALITY, CLEARTYPE_QUALITY, DEFAULT_CHARSET,
-    FF_DONTCARE, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, VARIABLE_PITCH,
+    BeginPaint, CreateFontW, CreatePen, CreateSolidBrush, DeleteObject, DrawTextW, EndPaint,
+    FillRect, InvalidateRect, RoundRect, SelectObject, SetBkMode, SetTextColor,
+    CLEARTYPE_QUALITY, CLIP_DEFAULT_PRECIS, DEFAULT_CHARSET, DT_CENTER, DT_LEFT, DT_SINGLELINE,
+    DT_VCENTER, DT_WORDBREAK, FF_DONTCARE, FW_BOLD, FW_NORMAL, OUT_TT_PRECIS, PAINTSTRUCT,
+    PS_SOLID, TRANSPARENT, VARIABLE_PITCH,
 };
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::WindowsAndMessaging::*;

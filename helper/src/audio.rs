@@ -102,6 +102,7 @@ impl AudioMonitor {
         self.name_cache.retain(|pid, _| live.contains(pid));
     }
 
+    #[allow(dead_code)]
     pub fn debug_count_all_sessions(&mut self) -> String {
         let mut lines = Vec::new();
         unsafe {
