@@ -5,8 +5,8 @@
 Your music gets quiet on its own when something else needs to be heard, then
 comes back when it is done.
 
-Start a game and Spotify pauses. Someone talks in Discord and the music dips for
-a moment. Open a YouTube video and it steps aside. Nothing to press.
+Start a game and Spotify pauses, someone talks in Discord and the music dips for
+a moment... Open a YouTube video and it steps aside!
 
 **Windows only.**
 
@@ -64,7 +64,7 @@ yourself at any time and Duckify treats that as your new normal.
 ## Common questions
 
 **Do I have to keep something open?**
-No. A small background program does the listening. It starts with Windows and
+No! A small background program does the listening. It starts with Windows and
 uses almost nothing while idle.
 
 **Will it pause for the wrong things?**
@@ -78,7 +78,7 @@ and No buttons, and there is a **Reset decisions** link at the bottom if you
 want to start over.
 
 **Can I turn it off for a while?**
-Yes. The duck menu has an **Enabled** switch.
+Yeah! The duck menu has an **Enabled** switch.
 
 **It says "Helper not running".**
 The background program is not started. Turn on **Start with Windows** in the
