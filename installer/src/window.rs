@@ -18,6 +18,7 @@ pub const H: i32 = 300;
 
 pub const ID_PRIMARY: usize = 1;
 pub const ID_SECONDARY: usize = 2;
+pub const ID_TERTIARY: usize = 3;
 
 pub static CHOICE: AtomicI32 = AtomicI32::new(0);
 pub static BUSY: AtomicBool = AtomicBool::new(false);
@@ -29,6 +30,7 @@ pub struct Ui {
     pub body: String,
     pub primary: String,
     pub secondary: Option<String>,
+    pub tertiary: Option<String>,
 }
 
 static UI: Mutex<Option<Ui>> = Mutex::new(None);
@@ -136,26 +138,29 @@ fn rgb(r: u8, g: u8, b: u8) -> COLORREF {
     COLORREF(r as u32 | ((g as u32) << 8) | ((b as u32) << 16))
 }
 
-unsafe fn button_rects(width: i32, height: i32, two: bool) -> (RECT, RECT) {
-    let bw = if two { 150 } else { 200 };
+unsafe fn button_rects(width: i32, height: i32, count: usize) -> [RECT; 3] {
     let bh = 40;
-    let gap = 12;
+    let gap = 10;
     let y = height - bh - 28;
+    let margin = 28;
+    let usable = width - margin * 2;
 
-    if two {
-        let total = bw * 2 + gap;
-        let x = (width - total) / 2;
-        (
-            RECT { left: x, top: y, right: x + bw, bottom: y + bh },
-            RECT { left: x + bw + gap, top: y, right: x + total, bottom: y + bh },
-        )
-    } else {
-        let x = (width - bw) / 2;
-        (
-            RECT { left: x, top: y, right: x + bw, bottom: y + bh },
-            RECT::default(),
-        )
+    let bw = match count {
+        0 | 1 => 200,
+        2 => 150,
+        _ => (usable - gap * 2) / 3,
+    };
+
+    let n = count.max(1) as i32;
+    let total = bw * n + gap * (n - 1);
+    let x = (width - total) / 2;
+
+    let mut out = [RECT::default(); 3];
+    for i in 0..n {
+        let left = x + (bw + gap) * i;
+        out[i as usize] = RECT { left, top: y, right: left + bw, bottom: y + bh };
     }
+    out
 }
 
 unsafe extern "system" fn wndproc(
@@ -239,40 +244,44 @@ unsafe extern "system" fn wndproc(
                 }
 
                 if !BUSY.load(Ordering::Relaxed) {
-                    let two = ui.secondary.is_some();
-                    let (r1, r2) = button_rects(width, height, two);
-
-                    let accent = CreateSolidBrush(rgb(0xF5, 0xA6, 0x23));
-                    let pen = CreatePen(PS_SOLID, 1, rgb(0xF5, 0xA6, 0x23));
-                    let oldpen = SelectObject(hdc, pen);
-                    let oldbrush = SelectObject(hdc, accent);
-                    let _ = RoundRect(hdc, r1.left, r1.top, r1.right, r1.bottom, 8, 8);
-                    SelectObject(hdc, oldbrush);
+                    let labels: Vec<&String> = [Some(&ui.primary), ui.secondary.as_ref(), ui.tertiary.as_ref()]
+                        .into_iter()
+                        .flatten()
+                        .collect();
+                    let rects = button_rects(width, height, labels.len());
 
                     SelectObject(hdc, btn_font);
-                    SetTextColor(hdc, rgb(0x14, 0x14, 0x16));
-                    let mut p1 = r1;
-                    let mut s1: Vec<u16> = ui.primary.encode_utf16().collect();
-                    DrawTextW(hdc, &mut s1, &mut p1, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+                    for (i, label) in labels.iter().enumerate() {
+                        let r = rects[i];
+                        let fill = if i == 0 {
+                            rgb(0xF5, 0xA6, 0x23)
+                        } else {
+                            rgb(0x14, 0x14, 0x16)
+                        };
+                        let edge = if i == 0 {
+                            rgb(0xF5, 0xA6, 0x23)
+                        } else {
+                            rgb(0x44, 0x44, 0x4C)
+                        };
 
-                    if let Some(sec) = &ui.secondary {
-                        let dark = CreateSolidBrush(rgb(0x14, 0x14, 0x16));
-                        let gpen = CreatePen(PS_SOLID, 1, rgb(0x44, 0x44, 0x4C));
-                        SelectObject(hdc, gpen);
-                        SelectObject(hdc, dark);
-                        let _ = RoundRect(hdc, r2.left, r2.top, r2.right, r2.bottom, 8, 8);
-                        let _ = DeleteObject(dark);
+                        let brush = CreateSolidBrush(fill);
+                        let pen = CreatePen(PS_SOLID, 1, edge);
+                        let ob = SelectObject(hdc, brush);
+                        let op = SelectObject(hdc, pen);
+                        let _ = RoundRect(hdc, r.left, r.top, r.right, r.bottom, 8, 8);
+                        SelectObject(hdc, ob);
+                        SelectObject(hdc, op);
+                        let _ = DeleteObject(brush);
+                        let _ = DeleteObject(pen);
 
-                        SetTextColor(hdc, rgb(0xD0, 0xD0, 0xD8));
-                        let mut p2 = r2;
-                        let mut s2: Vec<u16> = sec.encode_utf16().collect();
-                        DrawTextW(hdc, &mut s2, &mut p2, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-                        let _ = DeleteObject(gpen);
+                        SetTextColor(
+                            hdc,
+                            if i == 0 { rgb(0x14, 0x14, 0x16) } else { rgb(0xD0, 0xD0, 0xD8) },
+                        );
+                        let mut rr = r;
+                        let mut s: Vec<u16> = label.encode_utf16().collect();
+                        DrawTextW(hdc, &mut s, &mut rr, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
                     }
-
-                    SelectObject(hdc, oldpen);
-                    let _ = DeleteObject(pen);
-                    let _ = DeleteObject(accent);
                 }
             }
 
@@ -293,21 +302,28 @@ unsafe extern "system" fn wndproc(
 
             let mut rc = RECT::default();
             let _ = GetClientRect(hwnd, &mut rc);
-            let two = UI
+            let count = UI
                 .lock()
                 .unwrap()
                 .as_ref()
-                .map(|u| u.secondary.is_some())
-                .unwrap_or(false);
-            let (r1, r2) = button_rects(rc.right, rc.bottom, two);
+                .map(|u| 1 + u.secondary.is_some() as usize + u.tertiary.is_some() as usize)
+                .unwrap_or(1);
+            let rects = button_rects(rc.right, rc.bottom, count);
 
             let hit = |r: RECT| x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
-            if hit(r1) {
-                CHOICE.store(ID_PRIMARY as i32, Ordering::Relaxed);
-                let _ = PostMessageW(hwnd, WM_APP, WPARAM(0), LPARAM(0));
-            } else if two && hit(r2) {
-                CHOICE.store(ID_SECONDARY as i32, Ordering::Relaxed);
-                let _ = PostMessageW(hwnd, WM_APP, WPARAM(0), LPARAM(0));
+            for i in 0..count {
+                if hit(rects[i]) {
+                    CHOICE.store((i + 1) as i32, Ordering::Relaxed);
+                    let _ = PostMessageW(hwnd, WM_APP, WPARAM(0), LPARAM(0));
+                    break;
+                }
+            }
+            LRESULT(0)
+        }
+
+        WM_KEYDOWN => {
+            if wparam.0 == 0x1B && !BUSY.load(Ordering::Relaxed) {
+                let _ = DestroyWindow(hwnd);
             }
             LRESULT(0)
         }
