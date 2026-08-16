@@ -1,0 +1,16 @@
+{
+  "name": "Duckify",
+  "description": "Automatically pauses or quiets Spotify when games, Discord calls, or browser videos are making sound.",
+  "preview": "assets/preview.png",
+  "main": "duckify.js",
+  "extension": "duckify.js",
+  "authors": [
+    {
+      "name": "heybu",
+      "url": "https://github.com/heybu"
+    }
+  ],
+  "readme": "README.md",
+  "tags": ["volume", "automation", "gaming", "discord", "ducking"],
+  "license": "MIT"
+}
