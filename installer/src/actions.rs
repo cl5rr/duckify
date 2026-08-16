@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const REPO: &str = "heybu/duckify";
+pub const REPO: &str = "cl5rr/duckify";
 
 const NO_WINDOW: u32 = 0x0800_0000;
 

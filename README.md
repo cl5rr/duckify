@@ -24,7 +24,7 @@ Already have Spicetify? Skip to step 2.
 ### Step 2: run the Duckify installer
 
 1. Download **Duckify-Setup.exe** from the
-   [latest release](https://github.com/heybu/duckify/releases/latest)
+   [latest release](https://github.com/cl5rr/duckify/releases/latest)
 2. Double click it
 3. Press **Install**
 
