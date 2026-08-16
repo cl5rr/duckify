@@ -131,8 +131,17 @@
 }
 .dkf-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
 .dkf-toggle input { accent-color: var(--dkf-accent); cursor: pointer; }
-.dkf-topbar-btn { --dkf-icon-hole: var(--spice-main, #121212); }
-.dkf-topbar-btn svg { display: block; }
+.dkf-topbar-btn {
+  --dkf-icon-hole: var(--spice-main, #121212);
+  aspect-ratio: 1 / 1;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
+}
+.dkf-topbar-btn svg { display: block; flex: 0 0 auto; }
 .dkf[data-connected="false"] .dkf-group,
 .dkf[data-connected="false"] .dkf-footer { opacity: .4; pointer-events: none; }
 .main-trackCreditsModal-header {
@@ -876,7 +885,41 @@
     btn.onclick = openPanel;
 
     anchor.parentElement.insertBefore(btn, anchor.nextSibling);
+    matchAnchor(btn, anchor);
     return true;
+  }
+
+  function matchAnchor(btn, anchor) {
+    const apply = () => {
+      const a = anchor.getBoundingClientRect();
+      if (!a.width || !a.height) return false;
+
+      const side = Math.round(Math.max(a.width, a.height));
+      btn.style.width = `${side}px`;
+      btn.style.height = `${side}px`;
+
+      const cs = getComputedStyle(anchor);
+      btn.style.borderRadius = cs.borderRadius;
+      btn.style.margin = cs.margin;
+
+      const svg = btn.querySelector("svg");
+      if (svg) {
+        const icon = Math.round(side * 0.5);
+        svg.setAttribute("width", icon);
+        svg.setAttribute("height", icon);
+      }
+      return true;
+    };
+
+    if (!apply()) {
+      let tries = 0;
+      const wait = setInterval(() => {
+        if (apply() || ++tries > 20) clearInterval(wait);
+      }, 100);
+    }
+
+    const ro = new ResizeObserver(() => apply());
+    ro.observe(anchor);
   }
 
   // init
