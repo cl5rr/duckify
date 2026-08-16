@@ -409,8 +409,6 @@
     }
   }
 
-  // Snackbar takes only text, so the click target is wired up on the element
-  // once it renders.
   function makeClickable() {
     let tries = 0;
     const find = setInterval(() => {
@@ -434,7 +432,6 @@
 
   // socket
   function connect() {
-    // Guard against overlapping attempts leaving orphaned sockets behind.
     if (
       socket &&
       (socket.readyState === WebSocket.OPEN ||
@@ -486,10 +483,6 @@
     state.startFailed = false;
     notify();
 
-    // Electron blocks the renderer from launching a process or navigating to an
-    // external protocol, so the page cannot start the helper itself. Windows
-    // does honour the protocol from a shell, so this both tries it and keeps
-    // reconnecting in case the user starts it another way.
     try {
       window.open("duckify://start", "_blank");
     } catch {}

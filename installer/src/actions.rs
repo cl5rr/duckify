@@ -51,7 +51,7 @@ pub fn spicetify() -> Option<PathBuf> {
     if p.exists() {
         return Some(p);
     }
-    // Some installs put it on PATH instead.
+
     let found = Command::new("where")
         .arg("spicetify")
         .creation_flags(NO_WINDOW)
@@ -80,7 +80,6 @@ pub fn stop_helper() {
     std::thread::sleep(std::time::Duration::from_millis(600));
 }
 
-/// Copy the helper, register autostart, and install the Spicetify extension.
 pub fn install(progress: impl Fn(&str, i32)) -> Result<(), String> {
     progress("Stopping any running copy…", 5);
     stop_helper();
@@ -108,7 +107,7 @@ pub fn install(progress: impl Fn(&str, i32)) -> Result<(), String> {
         if let Some(spice) = spicetify() {
             let s = spice.to_string_lossy().to_string();
             progress("Enabling the extension…", 78);
-            // Preserve any other extensions the user already has enabled.
+
             let listed = Command::new(&s)
                 .args(["config", "extensions"])
                 .creation_flags(NO_WINDOW)
@@ -133,7 +132,6 @@ pub fn install(progress: impl Fn(&str, i32)) -> Result<(), String> {
     Ok(())
 }
 
-/// Remove everything this installer created.
 pub fn uninstall(progress: impl Fn(&str, i32)) -> Result<(), String> {
     progress("Stopping Duckify…", 10);
     let dir = install_dir();
@@ -149,8 +147,7 @@ pub fn uninstall(progress: impl Fn(&str, i32)) -> Result<(), String> {
 
     if let Some(spice) = spicetify() {
         let s = spice.to_string_lossy().to_string();
-        // Clearing the whole list would disable the user's other extensions, so
-        // only strip ours out of it.
+
         let listed = Command::new(&s)
             .args(["config", "extensions"])
             .creation_flags(NO_WINDOW)
@@ -179,8 +176,6 @@ pub struct Release {
     pub url: Option<String>,
 }
 
-/// Ask GitHub for the newest release. Returns None when offline or rate
-/// limited, which must never block installing.
 pub fn latest_release() -> Option<Release> {
     let url = format!("https://api.github.com/repos/{REPO}/releases/latest");
     let body = ureq::get(&url)
@@ -210,7 +205,6 @@ pub fn latest_release() -> Option<Release> {
     Some(Release { tag, url: asset })
 }
 
-/// Compare dotted numeric versions; leading v is ignored.
 pub fn is_newer(remote: &str, local: &str) -> bool {
     let parse = |s: &str| -> Vec<u32> {
         s.trim_start_matches(['v', 'V'])

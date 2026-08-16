@@ -22,10 +22,6 @@ use crate::rules::{Decision, Engine};
 
 const POLL_INTERVAL: Duration = Duration::from_millis(50);
 
-// Roughly a quarter second of audio at the 50ms poll rate. Low enough that a
-// brief notification sound still raises the question, high enough to ignore a
-// single-frame blip. Hits accumulate across separate bursts, so a short sound
-// that recurs will reach this even if no single burst does.
 pub const CANDIDATE_MIN_HITS: u32 = 5;
 
 pub struct Shared {
@@ -77,8 +73,6 @@ fn poll_loop(shared: Arc<Mutex<Shared>>, hub: server::Hub) {
     loop {
         let started = Instant::now();
 
-        // With nobody listening there is nothing to drive, so idle cheaply
-        // instead of metering audio 20 times a second.
         if !hub.has_clients() {
             std::thread::sleep(Duration::from_millis(500));
             continue;
@@ -92,9 +86,6 @@ fn poll_loop(shared: Arc<Mutex<Shared>>, hub: server::Hub) {
             }
         };
 
-        // Only resolve the focused window when a game might be running but
-        // silent; that is the sole case where it changes the outcome, and it
-        // costs a process handle open every time.
         let foreground = {
             let s = shared.lock().unwrap();
             if s.engine.wants_foreground() {
@@ -127,9 +118,6 @@ fn poll_loop(shared: Arc<Mutex<Shared>>, hub: server::Hub) {
                 s.last = Some(decision.clone());
             }
 
-            // The candidate list must be built on exactly the frames that send,
-            // or a sending frame would transmit an empty list and the panel
-            // would blink the pending questions in and out.
             if changed || heartbeat {
                 Some((decision, s.candidates.pending(CANDIDATE_MIN_HITS)))
             } else {
@@ -147,8 +135,6 @@ fn poll_loop(shared: Arc<Mutex<Shared>>, hub: server::Hub) {
             monitor.prune_cache(&live_pids);
         }
 
-        // Subtract the work already done so the cadence stays at POLL_INTERVAL
-        // rather than drifting to interval + work.
         let elapsed = started.elapsed();
         if elapsed < POLL_INTERVAL {
             std::thread::sleep(POLL_INTERVAL - elapsed);

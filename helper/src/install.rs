@@ -101,9 +101,6 @@ pub fn ensure_registered() {
     }
 }
 
-// Broadcast happens several times a second; spawning reg.exe that often would
-// cost far more than the state is worth, so the answer is cached and only
-// refreshed when we change it ourselves.
 static AUTOSTART: AtomicBool = AtomicBool::new(false);
 static AUTOSTART_READ: AtomicBool = AtomicBool::new(false);
 

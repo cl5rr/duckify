@@ -33,7 +33,6 @@ fn main() -> windows::core::Result<()> {
         Screen::Install
     };
 
-    // Only bother GitHub when we would actually offer an upgrade.
     let mut remote: Option<Release> = None;
     if screen == Screen::Install || screen == Screen::Remove {
         remote = latest_release();
@@ -154,9 +153,6 @@ fn run_loop(hwnd: HWND, mut screen: Screen, remote: Option<Release>, installed: 
     }
 }
 
-/// Run install or uninstall on this thread, repainting as it goes. The work is
-/// short and the window is deliberately unresponsive while it happens, so the
-/// user cannot start a second run on top of the first.
 fn do_work(hwnd: HWND, installing: bool) {
     BUSY.store(true, Ordering::Relaxed);
 
@@ -200,7 +196,6 @@ fn do_work(hwnd: HWND, installing: bool) {
     window::redraw(hwnd);
 }
 
-/// Drain pending messages so the window keeps painting during the work.
 fn pump(_hwnd: HWND) {
     unsafe {
         use windows::Win32::UI::WindowsAndMessaging::{PeekMessageW, PM_REMOVE};

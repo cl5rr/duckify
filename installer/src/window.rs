@@ -19,7 +19,6 @@ pub const H: i32 = 300;
 pub const ID_PRIMARY: usize = 1;
 pub const ID_SECONDARY: usize = 2;
 
-/// Which button the user pressed, read by main after the loop ends.
 pub static CHOICE: AtomicI32 = AtomicI32::new(0);
 pub static BUSY: AtomicBool = AtomicBool::new(false);
 
@@ -51,8 +50,6 @@ pub fn redraw(hwnd: HWND) {
     }
 }
 
-/// Create the window centered on the primary monitor, always on top, with no
-/// frame the user could drag or resize.
 pub fn create() -> windows::core::Result<HWND> {
     unsafe {
         let instance = GetModuleHandleW(None)?;
@@ -73,9 +70,6 @@ pub fn create() -> windows::core::Result<HWND> {
         let x = (sw - W) / 2;
         let y = (sh - H) / 2;
 
-        // WS_POPUP: no title bar, so there is nothing to drag and no system
-        // menu. TOPMOST keeps it above other windows; TOOLWINDOW keeps it out
-        // of the taskbar and alt-tab.
         let hwnd = CreateWindowExW(
             WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
             class,
@@ -95,8 +89,6 @@ pub fn create() -> windows::core::Result<HWND> {
     }
 }
 
-/// Grow the window from a small centered rectangle to full size, so it reads as
-/// opening toward the user rather than appearing abruptly.
 pub fn animate_open(hwnd: HWND) {
     unsafe {
         let sw = GetSystemMetrics(SM_CXSCREEN);
@@ -105,7 +97,7 @@ pub fn animate_open(hwnd: HWND) {
         let steps = 14;
         for i in 0..=steps {
             let t = i as f32 / steps as f32;
-            // Ease-out cubic: fast at the start, settling at the end.
+
             let e = 1.0 - (1.0 - t).powi(3);
             let scale = 0.82 + 0.18 * e;
 
@@ -182,7 +174,6 @@ unsafe extern "system" fn wndproc(
             let width = rc.right - rc.left;
             let height = rc.bottom - rc.top;
 
-            // Ground
             let bg = CreateSolidBrush(rgb(0x14, 0x14, 0x16));
             FillRect(hdc, &rc, bg);
             let _ = DeleteObject(bg);
@@ -210,7 +201,7 @@ unsafe extern "system" fn wndproc(
 
             let guard = UI.lock().unwrap();
             if let Some(ui) = guard.as_ref() {
-                // Title
+
                 let old = SelectObject(hdc, title_font);
                 SetTextColor(hdc, rgb(0xFF, 0xFF, 0xFF));
                 let mut tr = RECT { left: 32, top: 34, right: width - 32, bottom: 84 };
@@ -218,14 +209,12 @@ unsafe extern "system" fn wndproc(
                 DrawTextW(hdc, &mut t, &mut tr, DT_LEFT | DT_SINGLELINE);
                 SelectObject(hdc, old);
 
-                // Body
                 SelectObject(hdc, body_font);
                 SetTextColor(hdc, rgb(0xA8, 0xA8, 0xB0));
                 let mut br = RECT { left: 32, top: 92, right: width - 32, bottom: height - 90 };
                 let mut b: Vec<u16> = ui.body.encode_utf16().collect();
                 DrawTextW(hdc, &mut b, &mut br, DT_LEFT | DT_WORDBREAK);
 
-                // Progress bar, only while working.
                 let p = PROGRESS.load(Ordering::Relaxed);
                 if p >= 0 {
                     let track = RECT {
@@ -249,7 +238,6 @@ unsafe extern "system" fn wndproc(
                     let _ = DeleteObject(fb);
                 }
 
-                // Buttons
                 if !BUSY.load(Ordering::Relaxed) {
                     let two = ui.secondary.is_some();
                     let (r1, r2) = button_rects(width, height, two);
@@ -324,7 +312,6 @@ unsafe extern "system" fn wndproc(
             LRESULT(0)
         }
 
-        // Refuse to be moved: the window stays where it was placed.
         WM_NCHITTEST => LRESULT(HTCLIENT as isize),
         WM_MOVING | WM_SIZING => LRESULT(1),
 

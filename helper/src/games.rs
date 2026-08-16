@@ -401,8 +401,7 @@ mod tests {
 
     #[test]
     fn short_bursts_accumulate_towards_the_threshold() {
-        // A notification chime is audible for only a few polls at a time. Three
-        // separate bursts of two should still add up rather than resetting.
+
         let mut log = CandidateLog::default();
         for _ in 0..3 {
             log.note("chime.exe", 0.4);
@@ -429,9 +428,7 @@ mod tests {
 
     #[test]
     fn pending_is_stable_across_consecutive_polls() {
-        // The panel blinked because the list was only built on some of the
-        // frames that were sent. Whatever the frame, an established candidate
-        // must always be present.
+
         let mut log = CandidateLog::default();
         for _ in 0..6 {
             log.note("x.exe", 0.4);
@@ -456,7 +453,7 @@ mod tests {
         for _ in 0..6 {
             log.note("x.exe", 0.4);
         }
-        // Process exited entirely: absent from the session list.
+
         log.mark_missing_silent(&[]);
         let pending = log.pending(5);
         assert_eq!(pending.len(), 1);
@@ -484,8 +481,7 @@ impl CandidateLog {
     pub fn note(&mut self, exe: &str, peak: f32) {
         let key = exe.to_lowercase();
         let hits = self.seen.entry(key.clone()).or_insert(0);
-        // Saturate rather than wrap: a long-running app would otherwise count
-        // past u32 over a few days of uptime.
+
         *hits = hits.saturating_add(1);
         self.peak.insert(key.clone(), peak);
         self.active.insert(key, true);
